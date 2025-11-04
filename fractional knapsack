@@ -1,0 +1,60 @@
+# Function to solve Fractional Knapsack Problem using Greedy Method
+def fractional_knapsack(values, weights, capacity):
+    """
+    values   : list of item values (profits)
+    weights  : list of item weights
+    capacity : maximum weight of knapsack
+    """
+    n = len(values)
+    items = []
+
+    # Step 1: Compute value/weight ratio
+    for i in range(n):
+        ratio = values[i] / weights[i]
+        items.append((ratio, values[i], weights[i]))
+
+    # Step 2: Sort items by descending ratio
+    items.sort(reverse=True)
+
+    total_value = 0.0
+    remaining_capacity = capacity
+
+    # Step 3: Select items
+    for ratio, value, weight in items:
+        if remaining_capacity == 0:
+            break
+
+        if weight <= remaining_capacity:
+            # Take the full item
+            total_value += value
+            remaining_capacity -= weight
+        else:
+            # Take fractional part
+            fraction = remaining_capacity / weight
+            total_value += value * fraction
+            remaining_capacity = 0  # Knapsack is now full
+
+    return total_value
+
+
+# --------------------------------------------
+# Main Program
+# --------------------------------------------
+if __name__ == "__main__":
+    n = int(input("Enter number of items: "))
+
+    values = []
+    weights = []
+
+    for i in range(n):
+        val = float(input(f"Enter value of item {i+1}: "))
+        wt = float(input(f"Enter weight of item {i+1}: "))
+        values.append(val)
+        weights.append(wt)
+
+    capacity = float(input("Enter capacity of knapsack: "))
+
+    max_value = fractional_knapsack(values, weights, capacity)
+
+    print("\n--- Fractional Knapsack Solution ---")
+    print(f"Maximum value that can be obtained = {max_value:.2f}")
