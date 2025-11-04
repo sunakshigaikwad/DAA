@@ -1,0 +1,91 @@
+def solve_n_queens_with_first(n, first_row_1based, first_col_1based):
+    """
+    Solve N-Queens with the first queen already placed.
+    Inputs:
+      n                 : size of board (n x n)
+      first_row_1based  : row of the fixed queen (1-based)
+      first_col_1based  : column of the fixed queen (1-based)
+    Returns:
+      board (list of strings) with 'Q' and '.' if a solution exists, else None.
+    """
+
+    # Convert to 0-based indices
+    r0 = first_row_1based - 1
+    c0 = first_col_1based - 1
+
+    # Validate inputs
+    if not (0 <= r0 < n and 0 <= c0 < n):
+        raise ValueError("First queen position out of board range.")
+
+    # Trivial cases
+    if n == 1:
+        if r0 == 0 and c0 == 0:
+            return ["Q"]
+        else:
+            # Still valid since board is 1x1; but inputs outside would be filtered above
+            return ["Q"]
+
+    if n in (2, 3):
+        # No possible complete solutions for n=2 or n=3
+        return None
+
+    # Prepare board (list of chars per row)
+    board = [['.' for _ in range(n)] for __ in range(n)]
+    board[r0][c0] = 'Q'
+
+    # Sets to track used columns and diagonals
+    cols = {c0}
+    diag1 = {r0 - c0}   # r - c
+    diag2 = {r0 + c0}   # r + c
+
+    # Rows we need to fill (skip the row where first queen is placed)
+    rows_to_fill = [r for r in range(n) if r != r0]
+
+    # Backtracking function: try to place a queen in rows_to_fill[idx]
+    def backtrack(idx):
+        if idx == len(rows_to_fill):
+            return True  # all rows filled successfully
+
+        row = rows_to_fill[idx]
+        for col in range(n):
+            d1 = row - col
+            d2 = row + col
+            if (col not in cols) and (d1 not in diag1) and (d2 not in diag2):
+                # place
+                board[row][col] = 'Q'
+                cols.add(col); diag1.add(d1); diag2.add(d2)
+
+                if backtrack(idx + 1):
+                    return True
+
+                # undo
+                board[row][col] = '.'
+                cols.remove(col); diag1.remove(d1); diag2.remove(d2)
+
+        return False  # no column worked in this row
+
+    found = backtrack(0)
+    if not found:
+        return None
+
+    # Convert rows to strings for nicer output
+    return [''.join(row) for row in board]
+
+
+if __name__ == "__main__":
+    print("N-Queens solver with first queen fixed (backtracking).")
+    try:
+        n = int(input("Enter board size n (e.g., 8): ").strip())
+        fr = int(input("Enter first queen ROW (1-based): ").strip())
+        fc = int(input("Enter first queen COL (1-based): ").strip())
+    except ValueError:
+        print("Invalid input — please enter integer values.")
+        raise SystemExit
+
+    result = solve_n_queens_with_first(n, fr, fc)
+    if result is None:
+        print(f"No solution exists for n={n} with first queen at ({fr},{fc}).")
+    else:
+        print(f"\nOne valid {n}x{n} board with first queen at ({fr},{fc}):")
+        for row in result:
+            print(row)
