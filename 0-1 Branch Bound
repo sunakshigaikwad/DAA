@@ -1,0 +1,102 @@
+import heapq
+
+# Node class for Branch and Bound
+class Node:
+    def __init__(self, level, profit, weight, bound):
+        self.level = level      # current item index
+        self.profit = profit    # current profit
+        self.weight = weight    # current weight
+        self.bound = bound      # upper bound of profit
+
+    def __lt__(self, other):
+        return self.bound > other.bound  # max-heap based on bound
+
+
+# Function to calculate upper bound on maximum profit
+def bound(node, n, W, values, weights):
+    if node.weight >= W:
+        return 0
+
+    profit_bound = node.profit
+    j = node.level + 1
+    totweight = node.weight
+
+    # Add items while there is capacity
+    while j < n and totweight + weights[j] <= W:
+        totweight += weights[j]
+        profit_bound += values[j]
+        j += 1
+
+    # If capacity is not yet full, take fraction of next item
+    if j < n:
+        profit_bound += (W - totweight) * values[j] / weights[j]
+
+    return profit_bound
+
+
+def knapsack_branch_and_bound(values, weights, W):
+    n = len(values)
+
+    # Sort items by decreasing value/weight ratio
+    ratio_items = sorted(
+        zip(values, weights),
+        key=lambda x: x[0] / x[1],
+        reverse=True
+    )
+
+    values = [x[0] for x in ratio_items]
+    weights = [x[1] for x in ratio_items]
+
+    Q = []
+    u = Node(-1, 0, 0, 0)
+    v = Node(0, 0, 0, 0)
+
+    max_profit = 0
+    u.bound = bound(u, n, W, values, weights)
+    heapq.heappush(Q, u)
+
+    while Q:
+        u = heapq.heappop(Q)
+
+        if u.bound > max_profit and u.level < n - 1:
+            # Include the next item
+            v.level = u.level + 1
+            v.weight = u.weight + weights[v.level]
+            v.profit = u.profit + values[v.level]
+
+            if v.weight <= W and v.profit > max_profit:
+                max_profit = v.profit
+
+            v.bound = bound(v, n, W, values, weights)
+            if v.bound > max_profit:
+                heapq.heappush(Q, Node(v.level, v.profit, v.weight, v.bound))
+
+            # Exclude the next item
+            v.weight = u.weight
+            v.profit = u.profit
+            v.bound = bound(v, n, W, values, weights)
+            if v.bound > max_profit:
+                heapq.heappush(Q, Node(v.level, v.profit, v.weight, v.bound))
+
+    return max_profit
+
+
+# ------------------------------------------
+# Main Program
+# ------------------------------------------
+if __name__ == "__main__":
+    n = int(input("Enter number of items: "))
+    values = []
+    weights = []
+
+    for i in range(n):
+        val = int(input(f"Enter value of item {i + 1}: "))
+        wt = int(input(f"Enter weight of item {i + 1}: "))
+        values.append(val)
+        weights.append(wt)
+
+    capacity = int(input("Enter capacity of knapsack: "))
+    max_profit = knapsack_branch_and_bound(values, weights, capacity)
+
+    print("\n--- 0-1 Knapsack using Branch and Bound ---")
+    print(f"Maximum value that can be obtained = {max_profit}")
